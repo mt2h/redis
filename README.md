@@ -20,24 +20,67 @@ redis-cli
 
 ## Performance (redis-benchmark)
 
-```bash
 redis-cli -p 6379
-127.0.0.1:6379> keys *
-127.0.0.1:6379> exit
 
-redis-cli
-127.0.0.1:6379> redis-benchmark -h 127.0.0.1 -q -n 1000000
+```bash
+keys *
+exit
 
-free -h
+#redis-cli
+redis-benchmark -h 127.0.0.1 -q -n 1000000
 
-redis-cli
-127.0.0.1:6379> redis-benchmark -h 127.0.0.1 -p 6379 -q -n 1000000 -d 10 #10 bytes per records
+#free -h
 
-127.0.0.1:6379> redis-benchmark -h 127.0.0.1 -p 6379 -q -n 1000000 -d 10 -t get,set
-127.0.0.1:6379> redis-benchmark -h 127.0.0.1 -p 6379 -q -n 1000000 -d 10 -t get,set -c 5 #-c number of clients
+#redis-cli
+redis-benchmark -h 127.0.0.1 -p 6379 -q -n 1000000 -d 10 #10 bytes per records
 
-127.0.0.1:6379> dbsize
-127.0.0.1:6379> flushall
+redis-benchmark -h 127.0.0.1 -p 6379 -q -n 1000000 -d 10 -t get,set
+redis-benchmark -h 127.0.0.1 -p 6379 -q -n 1000000 -d 10 -t get,set -c 5 #-c number of clients
+
+dbsize
+flushall
 ```
 
-#
+## Data Types
+
+redis-cli
+
+```bash
+#simple values
+set chair 100
+get chair
+keys *
+del chair
+set seq_id 1
+incr seq_id #increment counter
+get seq_id
+exists seq_id #if exists
+dbsize #total records
+
+#multiple values
+mset soft 100 TV 200 Bed 300
+mget soft TV Bed
+
+#TTL (expires seconds)
+set color red EX 60
+expire Bed 60
+flushall #all clear
+
+#lists
+lpush color Red Blue White #insert from left list
+lrange color 0 -1 #get list
+lpush color Black
+rpush color Magenta #insert right to list
+#lrange | rrange color 0 -(total - secuncuence)
+llen color #lenght list
+
+#remove elements of list
+lpop color
+rpop color
+ltrim color 0 2 #delete from 2 index onwards
+
+#hashes
+hset product chair 100 table 200 TV 300
+hget product chair
+hmget product chair table #get multiple elements
+```
