@@ -83,4 +83,28 @@ ltrim color 0 2 #delete from 2 index onwards
 hset product chair 100 table 200 TV 300
 hget product chair
 hmget product chair table #get multiple elements
+
+#sets (members)
+sadd users_ip 10.0.0.1
+sadd users_ip 10.0.0.2 10.0.0.3 192.168.0.0
+scard users_ip
+smembers users_ip
+sadd yesterday_ip 10.0.0.1 192.168.0.0 10.3.4.0 192.168.0.0.3
+sdiff users_ip yesterday_ip
+sdiff yesterday_ip users_ip
+sismember yesterday_ip 192.168.0.0 #if exists as member
+smove yesterday_ip previous_ip 192.168.0.0
+smembers previous_ip
+smembers yesterday_ip
+sadd users john martin rahul vikas henry
+spop users #remove
+spop users 2
+srem users "john" #remove
+srem users "martin" "henry"
+```
+
+## History
+
+```bash
+less ~/.rediscli_history
 ```
