@@ -103,6 +103,56 @@ srem users "john" #remove
 srem users "martin" "henry"
 ```
 
+## Transactions
+
+https://www.itpanther.com/redis-transactions/
+
+```bash
+set ticket_available 4
+keys *
+get ticket_available
+decr ticket_available
+
+multi
+get ticket_available #QUEUED
+decr ticket_available #QUEUED
+exec
+
+multi
+decr ticket_available #QUEUED
+discard #discard transaction
+
+watch ticket_available
+multi
+get ticket_available
+decr ticket_available
+exec
+```
+
+## Redis Insertion
+
+https://www.itpanther.com/what-is-the-fastest-way-to-insert-data-to-redis/
+
+```bash
+cd raw_data/
+awk -F ',' '{print $1}' countries.csv #print firt column (separate by comma)
+awk -F ',' '{print "SET " $2 " " $1}' countries.csv > countries_to_redis.csv
+wc -l countries_to_redis.csv #count lines
+
+#insert data
+cat countries_to_redis.csv | redis-cli -h localhost -p 6379
+cat countries_to_redis.csv | redis-cli -h localhost -p 6379 --pipe
+
+dbsize
+```
+
+## Commands
+
+```bash
+ps -ef | grep redis
+sudo redis-server /etc/redis/redis.conf &
+```
+
 ## History
 
 ```bash
