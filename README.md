@@ -146,6 +146,21 @@ cat countries_to_redis.csv | redis-cli -h localhost -p 6379 --pipe
 dbsize
 ```
 
+## Backup and Restore
+
+```bash
+vim /etc/redis/redis.conf
+```
+
+## Python
+
+```bash
+cd python
+cat student.csv.redis_format | redis-cli --pipe
+pip3 install redis
+python3 load_students_info.py 1
+```
+
 ## Commands
 
 ```bash

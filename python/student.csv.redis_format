@@ -1,0 +1,5 @@
+SET id "firstname,lastname,fullname,address"
+SET 1 "john,cena,john cena,ABC"
+SET 2 "smith,los,smith los,DEF"
+SET 3 "smith,los,smith los,GHI"
+SET 4 "rock,johnson,rock johnson,KLM"
