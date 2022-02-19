@@ -168,6 +168,34 @@ ps -ef | grep redis
 sudo redis-server /etc/redis/redis.conf &
 ```
 
+## Master and Slaves
+
+```bash
+#create slaves
+cd /etc/redis
+
+sudo cp redis.conf redis-slave-1.conf
+sudo mkdir /var/lib/redis-slave-1
+sudo sed -i 's/port 6379/port 6380/g' redis-slave-1.conf
+sudo sed -i 's+dir /var/lib/redis+dir /var/lib/redis-slave-1+g' redis-slave-1.conf
+sudo sed -i 's/# replicaof <masterip> <masterport>/replicaof 127.0.0.1 6379/g' redis-slave-1.conf
+sudo sed -i 's+logfile /var/log/redis/redis-server.log+logfile /var/log/redis/redis-slave-1.log+g' redis-slave-1.conf
+
+sudo cp redis.conf redis-slave-2.conf
+sudo mkdir /var/lib/redis-slave-2
+sudo sed -i 's/port 6379/port 6381/g' redis-slave-2.conf
+sudo sed -i 's+dir /var/lib/redis+dir /var/lib/redis-slave-2+g' redis-slave-2.conf
+sudo sed -i 's/# replicaof <masterip> <masterport>/replicaof 127.0.0.1 6379/g' redis-slave-2.conf
+sudo sed -i 's+logfile /var/log/redis/redis-server.log+logfile /var/log/redis/redis-slave-2.log+g' redis-slave-2.conf
+
+sudo cp redis.conf redis-slave-3.conf
+sudo mkdir /var/lib/redis-slave-3
+sudo sed -i 's/port 6379/port 6382/g' redis-slave-3.conf
+sudo sed -i 's+dir /var/lib/redis+dir /var/lib/redis-slave-3+g' redis-slave-3.conf
+sudo sed -i 's/# replicaof <masterip> <masterport>/replicaof 127.0.0.1 6379/g' redis-slave-3.conf
+sudo sed -i 's+logfile /var/log/redis/redis-server.log+logfile /var/log/redis/redis-slave-3.log+g' redis-slave-3.conf
+```
+
 ## History
 
 ```bash
