@@ -194,6 +194,25 @@ sudo sed -i 's/port 6379/port 6382/g' redis-slave-3.conf
 sudo sed -i 's+dir /var/lib/redis+dir /var/lib/redis-slave-3+g' redis-slave-3.conf
 sudo sed -i 's/# replicaof <masterip> <masterport>/replicaof 127.0.0.1 6379/g' redis-slave-3.conf
 sudo sed -i 's+logfile /var/log/redis/redis-server.log+logfile /var/log/redis/redis-slave-3.log+g' redis-slave-3.conf
+
+sudo redis-server /etc/redis/redis-slave-1.conf
+sudo redis-server /etc/redis/redis-slave-2.conf
+sudo redis-server /etc/redis/redis-slave-3.conf
+
+ps -ef  | grep redis
+ls /var/log/redis/
+cat /var/log/redis/redis-slave-1.log
+
+redis-cli
+#into redis
+lpush color Red Green Black White
+lrange color 0 -1
+
+redis-cli -p 6380
+#into redis
+dbsize
+keys *
+lrange color 0 -1
 ```
 
 ## History
