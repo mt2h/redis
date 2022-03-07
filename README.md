@@ -215,8 +215,78 @@ keys *
 lrange color 0 -1
 ```
 
+## High Availability with Sentinel
+
+### Schema IP:
+- Master node: 10.128.0.2
+- Slave node: 10.128.0.4
+- Slave node: 10.128.0.5
+
+### Step 1:
+Configure three servers where one is a master and two slaves
+- Master node (redis + sentinel)
+- Salves nodes (redis + sentinel)
+
+#### Install Redis Sentinel
+
+```bash
+sudo apt install redis-sentinel -y #por by default is 26379
+```
+
+#### change configuration files
+
+Master node
+
+```bash
+sudo sed -i 's/bind 127.0.0.1/bind 10.128.0.2/g' /etc/redis/redis.conf
+sudo sed -i 's/bind 127.0.0.1 ::1/10.128.0.2/g' /etc/redis/sentinel.conf
+sudo sed -i 's/sentinel monitor mymaster 127.0.0.1 6379 2/sentinel monitor mymaster 10.128.0.2 6379 2/g' /etc/redis/sentinel.conf #last params 2 is for quorum to decided promoved to master with master is down
+```
+
+Slave 1
+
+```bash
+sudo sed -i 's/bind 127.0.0.1/bind 10.128.0.4/g' /etc/redis/redis.conf
+sudo sed -i 's/# replicaof <masterip> <masterport>/replicaof 10.128.0.2 6379/g' /etc/redis/redis.conf
+sudo sed -i 's/bind 127.0.0.1 ::1/10.128.0.4/g' /etc/redis/sentinel.conf
+sudo sed -i 's/sentinel monitor mymaster 127.0.0.1 6379 2/sentinel monitor mymaster 10.128.0.2 6379 2/g' /etc/redis/sentinel.conf
+```
+
+Slave 2
+
+```bash
+sudo sed -i 's/bind 127.0.0.1/bind 10.128.0.5/g' /etc/redis/redis.conf
+sudo sed -i 's/# replicaof <masterip> <masterport>/replicaof 10.128.0.2 6379/g' /etc/redis/redis.conf
+sudo sed -i 's/bind 127.0.0.1 ::1/10.128.0.5/g' /etc/redis/sentinel.conf
+sudo sed -i 's/sentinel monitor mymaster 127.0.0.1 6379 2/sentinel monitor mymaster 10.128.0.2 6379 2/g' /etc/redis/sentinel.conf
+```
+
+#### Enable sentinel in servers
+
+```bash
+sudo systemctl start redis-sentinel
+sudo systemctl enable redis-sentinel
+sudo systemctl status redis-sentinel
+```
+
+```bash
+redis-cli -h 10.128.0.2 -p 26379 #connect to master node
+#view info from sentinel
+sentinel master mymaster #mymaster name seted from sentinel monitor in sentinel.conf
+#view log
+/var/log/redis/redis-sentinel.log
+```
+
+## Replication and Failover
+
 ## History
 
 ```bash
 less ~/.rediscli_history
+```
+
+## Clustering
+
+```bash
+
 ```
