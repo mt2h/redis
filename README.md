@@ -279,6 +279,36 @@ sentinel master mymaster #mymaster name seted from sentinel monitor in sentinel.
 
 ## Replication and Failover
 
+### Schema IP:
+- Master Server: 10.128.0.4
+- Slave Server: 10.128.0.5
+- New Master Server (Make Server): 10.128.0.6
+
+#### change configuration files
+
+Master Server
+
+```bash
+sudo sed -i 's/bind 127.0.0.1/bind 10.128.0.4/g' /etc/redis/redis.conf
+```
+
+Slave Server
+
+```bash
+sudo sed -i 's/bind 127.0.0.1/bind 10.128.0.5/g' /etc/redis/redis.conf
+sudo sed -i 's/# replicaof <masterip> <masterport>/replicaof 10.128.0.4 6379/g' /etc/redis/redis.conf
+```
+
+New Master Server (Make Server)
+
+```bash
+redis-cli 10.128.0.5
+save #into redis, get last data to dump
+sudo sed -i 's/bind 127.0.0.1/bind 10.128.0.6/g' /etc/redis/redis.conf
+redis-cli 10.128.0.5 10.128.0.6 6379 #into redis, set new master for this slave
+slaveof 
+```
+
 ## History
 
 ```bash
