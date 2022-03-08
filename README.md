@@ -168,6 +168,12 @@ ps -ef | grep redis
 sudo redis-server /etc/redis/redis.conf &
 ```
 
+## History
+
+```bash
+less ~/.rediscli_history
+```
+
 ## Master and Slaves
 
 ```bash
@@ -309,14 +315,91 @@ redis-cli 10.128.0.5 10.128.0.6 6379 #into redis, set new master for this slave
 slaveof 
 ```
 
-## History
-
-```bash
-less ~/.rediscli_history
-```
-
 ## Clustering
 
-```bash
+https://www.itpanther.com/setting-up-redis-clustering/
 
+### Schema IP:
+- Node 1: port
+- Node 2: port
+- Node 3: port
+- Node 4: port
+- Node 5: port
+- Node 6: port
+
+```bash
+sudo mkdir /var/lib/redis-n1
+sudo mkdir /var/lib/redis-n2
+sudo mkdir /var/lib/redis-n3
+sudo mkdir /var/lib/redis-n4
+sudo mkdir /var/lib/redis-n5
+sudo mkdir /var/lib/redis-n6
+
+sudo tee /etc/redis/redis-n1.conf<<EOF
+port 7001
+cluster-enabled yes
+cluster-config-file nodes.conf
+cluster-node-timeout 5000
+appendonly yes
+EOF
+
+sudo cp /etc/redis/redis-n1.conf /etc/redis/redis-n2.conf
+sudo sed -i 's/port 7001/port 7002/g' /etc/redis/redis-n2.conf
+
+sudo cp /etc/redis/redis-n1.conf /etc/redis/redis-n3.conf
+sudo sed -i 's/port 7001/port 7003/g' /etc/redis/redis-n3.conf
+
+sudo cp /etc/redis/redis-n1.conf /etc/redis/redis-n4.conf
+sudo sed -i 's/port 7001/port 7004/g' /etc/redis/redis-n4.conf
+
+sudo cp /etc/redis/redis-n1.conf /etc/redis/redis-n5.conf
+sudo sed -i 's/port 7001/port 7005/g' /etc/redis/redis-n5.conf
+
+sudo cp /etc/redis/redis-n1.conf /etc/redis/redis-n6.conf
+sudo sed -i 's/port 7001/port 7006/g' /etc/redis/redis-n6.conf
+
+cat /etc/redis/redis-n*
+
+sudo mkdir /etc/redis/700{1..6}
+sudo mv /etc/redis/redis-n1.conf /etc/redis/7001
+sudo mv /etc/redis/redis-n2.conf /etc/redis/7002
+sudo mv /etc/redis/redis-n3.conf /etc/redis/7003
+sudo mv /etc/redis/redis-n4.conf /etc/redis/7004
+sudo mv /etc/redis/redis-n5.conf /etc/redis/7005
+sudo mv /etc/redis/redis-n6.conf /etc/redis/7006
+
+cd /etc/redis/7001/ && sudo redis-server redis-n1.conf &
+cd /etc/redis/7002/ && sudo redis-server redis-n2.conf &
+cd /etc/redis/7003/ && sudo redis-server redis-n3.conf &
+cd /etc/redis/7004/ && sudo redis-server redis-n4.conf &
+cd /etc/redis/7005/ && sudo redis-server redis-n5.conf &
+cd /etc/redis/7006/ && sudo redis-server redis-n6.conf &
+
+ps -ef | grep redis
+
+sudo redis-cli --cluster create 127.0.0.1:7001 127.0.0.1:7002 127.0.0.1:7003 127.0.0.1:7004 127.0.0.1:7005 127.0.0.1:7006 --cluster-replicas 1
+```
+
+![Clustering](./img/clustering.png)
+
+
+### Connecting to Redis-CLI with Cluster Aware
+
+```bash
+redis-cli -c -p 7001
+
+ #into redis
+set foo bar
+set hello word
+get foo
+```
+
+![Insert into Clustering](./img/insert_into_clustering.png)
+
+
+```bash
+redis-cli --cluster check 127.0.0.1:7001
+redis-cli -p 7001 cluster nodes
+redis-cli -p 7001 shutdown
+redis-cli --cluster check 127.0.0.1:7003
 ```
