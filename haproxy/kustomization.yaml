@@ -1,0 +1,14 @@
+helmCharts:
+  - name: redis
+    repo: https://charts.bitnami.com/bitnami
+    version: 17.15.2
+    releaseName: redis
+    valuesFile: redis.yaml
+    namespace: redis
+
+  - name: haproxy
+    repo: https://charts.bitnami.com/bitnami
+    version: 2.1.12
+    releaseName: haproxy
+    valuesFile: haproxy.yaml
+    namespace: redis
