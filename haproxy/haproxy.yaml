@@ -84,8 +84,9 @@ service:
   ##
   ports:
     - name: redis
+      protocol: TCP
       port: 6379
-      targetPort: redis
+      targetPort: 6379
   ## @param service.clusterIP haproxy service Cluster IP
   ## e.g.:
   ## clusterIP: None
@@ -371,34 +372,13 @@ readinessProbe:
   timeoutSeconds: 5
 ## @param customStartupProbe Custom startupProbe that overrides the default one
 ##
-customStartupProbe:
-  tcpSocket:
-    port: redis
-  initialDelaySeconds: 10
-  periodSeconds: 10
-  timeoutSeconds: 5
-  successThreshold: 1
-  failureThreshold: 3
+customStartupProbe: {}
 ## @param customLivenessProbe Custom livenessProbe that overrides the default one
 ##
-customLivenessProbe:
-  tcpSocket:
-    port: redis
-  initialDelaySeconds: 10
-  periodSeconds: 10
-  timeoutSeconds: 5
-  successThreshold: 1
-  failureThreshold: 3
+customLivenessProbe: {}
 ## @param customReadinessProbe Custom readinessProbe that overrides the default one
 ##
-customReadinessProbe:
-  tcpSocket:
-    port: redis
-  initialDelaySeconds: 10
-  periodSeconds: 10
-  timeoutSeconds: 5
-  successThreshold: 1
-  failureThreshold: 3
+customReadinessProbe: {}
 ## haproxy resource requests and limits
 ## ref: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/
 ## @param resourcesPreset Set container resources according to one common preset (allowed values: none, nano, micro, small, medium, large, xlarge, 2xlarge). This is ignored if resources is set (resources is recommended for production).
@@ -530,46 +510,37 @@ nodeAffinityPreset:
 ## Taken from haproxytech/haproxy chart: https://github.com/haproxytech/helm-charts/tree/main/haproxy
 ##
 configuration: |
+  global
+    log stdout format raw local0
+    maxconn 1024
   defaults
-    mode tcp
-    timeout connect 5s
-    timeout client 300s
-    timeout server 300s
-    timeout check 5s
-
-  listen health_check_http_url
-    bind *:8888
-    mode http
-    monitor-uri /healthz
-    option dontlognull
-
-  frontend ft_redis
+    log global
+    timeout client 30s
+    timeout connect 30s
+    timeout server 30s
+  frontend redis_frontend
     bind *:6379
-    default_backend bk_redis_master
-
-  backend bk_redis_master
     mode tcp
+    default_backend redis_backend
+  backend redis_backend
+    mode tcp
+    balance roundrobin
     option tcp-check
-    tcp-check connect
-    tcp-check send INFO\ replication\r\n
+    tcp-check send PING\r\n
+    tcp-check expect string +PONG
+    tcp-check send info\ replication\r\n
     tcp-check expect string role:master
     tcp-check send QUIT\r\n
-    server redis-node-0 redis-node-0.redis-headless.redis.svc.cluster.local:6379 check inter 2s fall 3 rise 2
-    server redis-node-1 redis-node-1.redis-headless.redis.svc.cluster.local:6379 check inter 2s fall 3 rise 2
-    server redis-node-2 redis-node-2.redis-headless.redis.svc.cluster.local:6379 check inter 2s fall 3 rise 2
-
-  frontend stats
-    mode http
-    bind *:9101
-    http-request use-service prometheus-exporter if { path /metrics }
-    stats enable
-    stats uri /stats
-    stats refresh 10s
+    tcp-check expect string +OK
+    server R1 redis-node-0.redis-headless.redis.svc.cluster.local:6379 check inter 1s
+    server R2 redis-node-1.redis-headless.redis.svc.cluster.local:6379 check inter 1s
+    server R3 redis-node-2.redis-headless.redis.svc.cluster.local:6379 check inter 1s
+## @param usePassword Enable password authentication
 ## @param containerPorts [array] List of container ports to enable in the haproxy container
 ##
 containerPorts:
-  - name: redis
-    containerPort: 6379
+  - name: http
+    containerPort: 8080
 ## @param existingConfigmap configmap with HAProxy configuration
 ##
 existingConfigmap: ""
@@ -615,7 +586,11 @@ lifecycleHooks: {}
 ##   - name: FOO
 ##     value: "bar"
 ##
-extraEnvVars: []
+extraEnvVars:
+  - name: REDIS_SENTINEL_HOST
+    value: "redis.redis.svc.cluster.local"
+  - name: REDIS_SENTINEL_PORT
+    value: "26379"
 ## @param extraEnvVarsCM Name of existing ConfigMap containing extra env vars for haproxy nodes
 ##
 extraEnvVarsCM: ""
