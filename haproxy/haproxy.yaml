@@ -83,10 +83,14 @@ service:
   ## @param service.ports [array] List of haproxy service ports
   ##
   ports:
-    - name: redis
+    - name: redis-master
       protocol: TCP
       port: 6379
       targetPort: 6379
+    - name: redis-slaves
+      protocol: TCP
+      port: 6380
+      targetPort: 6380
   ## @param service.clusterIP haproxy service Cluster IP
   ## e.g.:
   ## clusterIP: None
@@ -518,11 +522,11 @@ configuration: |
     timeout client 30s
     timeout connect 30s
     timeout server 30s
-  frontend redis_frontend
+  frontend redis_frontend_master
     bind *:6379
     mode tcp
-    default_backend redis_backend
-  backend redis_backend
+    default_backend redis_backend_master
+  backend redis_backend_master
     mode tcp
     balance roundrobin
     option tcp-check
@@ -535,12 +539,31 @@ configuration: |
     server R1 redis-node-0.redis-headless.redis.svc.cluster.local:6379 check inter 1s
     server R2 redis-node-1.redis-headless.redis.svc.cluster.local:6379 check inter 1s
     server R3 redis-node-2.redis-headless.redis.svc.cluster.local:6379 check inter 1s
+  frontend redis_frontend_slaves
+    bind *:6380
+    mode tcp
+    default_backend redis_backend_slaves
+  backend redis_backend_slaves
+    mode tcp
+    balance roundrobin
+    option tcp-check
+    tcp-check send PING\r\n
+    tcp-check expect string +PONG
+    tcp-check send info\ replication\r\n
+    tcp-check expect string role:slave
+    tcp-check send QUIT\r\n
+    tcp-check expect string +OK
+    server R1 redis-node-0.redis-headless.redis.svc.cluster.local:6379 check inter 1s
+    server R2 redis-node-1.redis-headless.redis.svc.cluster.local:6379 check inter 1s
+    server R3 redis-node-2.redis-headless.redis.svc.cluster.local:6379 check inter 1s
 ## @param usePassword Enable password authentication
 ## @param containerPorts [array] List of container ports to enable in the haproxy container
 ##
 containerPorts:
-  - name: http
-    containerPort: 8080
+  - name: redis-master
+    containerPort: 6379
+  - name: redis-slaves
+    containerPort: 6380
 ## @param existingConfigmap configmap with HAProxy configuration
 ##
 existingConfigmap: ""
